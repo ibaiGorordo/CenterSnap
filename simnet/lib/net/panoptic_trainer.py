@@ -22,7 +22,7 @@ class PanopticModel(pl.LightningModule):
   ):
     super().__init__()
 
-    self.hparams = hparams
+    self.save_hyperparameters(hparams)
     self.epochs = epochs
     self.train_dataset = train_dataset
 
@@ -34,7 +34,7 @@ class PanopticModel(pl.LightningModule):
     seg_output, depth_output, small_depth_output, pose_output = self.model(
         image
     )
-    return seg_output, depth_output, small_depth_output, pose_output
+    return seg_output.seg_pred, depth_output.depth_pred, small_depth_output.depth_pred, pose_output.heatmap, pose_output.latent_emb, pose_output.abs_pose_field
   
   def optimizer_step(self, epoch_nb, batch_nb, optimizer, optimizer_i, second_order_closure=None):
     super().optimizer_step(epoch_nb, batch_nb, optimizer, optimizer_i, second_order_closure)
@@ -116,7 +116,6 @@ class PanopticModel(pl.LightningModule):
     log = {}
     return {'log': log}
 
-  @pl.data_loader
   def train_dataloader(self):
     return common.get_loader(
         self.hparams,
@@ -124,7 +123,7 @@ class PanopticModel(pl.LightningModule):
         preprocess_func=self.preprocess_func,
         datapoint_dataset=self.train_dataset
     )
-  @pl.data_loader
+
   def val_dataloader(self):
     return common.get_loader(self.hparams, "val", preprocess_func=self.preprocess_func)
 
